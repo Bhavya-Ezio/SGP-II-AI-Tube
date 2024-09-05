@@ -1,0 +1,74 @@
+import { Router, json, Request, Response } from "express";
+const router = Router();
+router.use(json());
+import { authenticateToken } from "../middleware/authenticate.js";
+import { StatusCodes } from "http-status-codes";
+import jwt from "jsonwebtoken";
+import { resBody } from "../models/req&res.js";
+import { User } from "../models/user.js";
+import { createUser, getProfile, loginUser } from "../controllers/user.controller.js";
+
+
+router.post("/signup", async (req: Request<{}, resBody, User>, res: Response<resBody>) => {
+    try {
+        const body = req.body;
+        if (!body.name || !body.email || !body.username || !body.password || !body.DOB || !body.gender || !body.Description || !body.About) {
+            return res.json({
+                message: "Please fill all the fields",
+                success: false,
+            }).status(StatusCodes.BAD_REQUEST)
+        }
+        const resposne = await createUser(body);
+        if (resposne.success) {
+            return res.json({
+                message: "User created",
+                success: true,
+            }).status(StatusCodes.OK)
+        } else {
+            return res.json({
+                message: "Error adding user",
+                success: false,
+            }).status(StatusCodes.INTERNAL_SERVER_ERROR)
+        }
+    } catch (error: any) {
+        console.log(error);
+        return res.json({
+            message: "Error adding user",
+            success: false,
+        }).status(StatusCodes.INTERNAL_SERVER_ERROR)
+    }
+})
+
+router.post("/login", async (req: Request<{}, resBody, User>, res: Response<resBody>) => {
+    const body = req.body;
+    if (!body.username || !body.password) {
+        return res.json({
+            message: "Please fill all the fields",
+            success: false
+        }).status(StatusCodes.BAD_REQUEST);
+    }
+    const response = await loginUser(body);
+    if (response.success) {
+        const id = response.data;
+        const token = jwt.sign({ id: response.data }, process.env.ACCESS_TOKEN_SECRET!);
+        return res.cookie("accessToken", token).json({
+            message: response.message,
+            success: true,
+        }).status(StatusCodes.OK);
+    } else {
+        return res.json({
+            message: response.message,
+            success: false,
+        }).status(StatusCodes.UNAUTHORIZED);
+    }
+})
+
+router.get("/verify", authenticateToken, (req: Request, res: Response) => {
+    res.json({
+        message: "done",
+        success: true
+    })
+})
+
+router.get("/profile",authenticateToken,getProfile)
+export default router;
