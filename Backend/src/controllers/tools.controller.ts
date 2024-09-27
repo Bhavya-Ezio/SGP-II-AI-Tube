@@ -8,7 +8,7 @@ import { StatusCodes } from 'http-status-codes';
 
 const addTool = async (req: Request<{}, resBody, Tools>, res: Response<resBody>) => {
     try {
-        const { uploaderID, name, description } = req.body;
+        const { uploaderID, name, description, category } = req.body;
         if (!req.user || !('id' in req.user)) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 message: "Unauthorized",
@@ -19,7 +19,8 @@ const addTool = async (req: Request<{}, resBody, Tools>, res: Response<resBody>)
         const tool = new Tool({
             uploaderID: req.user.id,
             name: name,
-            description: description,
+            description,
+            category,
             likes: 0,
             dislikes: 0,
             comments: [],
@@ -121,4 +122,79 @@ const searchTools = async (req: Request<{ id: string }, resBody>, res: Response<
         }).status(StatusCodes.INTERNAL_SERVER_ERROR);
     }
 }
-export { addTool, addFiles, searchTools }
+
+const getToolDetails = async (req: Request<{ id: string }, resBody>, res: Response<resBody>) => {
+    try {
+        const toolId = req.params.id;
+        const tool = await Tool.findById(toolId).select("-_id -__v")
+            .populate("comments", { _id: 0, __v: 0 });
+        console.log(tool);
+        return res.json({
+            message: "data sent",
+            success: true,
+            data: tool!,
+        })
+    } catch (e: any) {
+        console.log(e.message);
+        res.json({ message: "Error getting details", success: false })
+    }
+}
+
+const addComment = async (req: Request<{ id: string }, resBody, Comments>, res: Response<resBody>) => {
+    const toolId = req.params.id;
+    const { text } = req.body;
+    const userId = ("id" in req.user!) ? req.user.id : "";
+    try {
+        const comment = new Comment({
+            text: text,
+            userId: userId,
+            timestamp: Date.now(),
+        })
+        await comment.save();
+
+        const response = await Tool.updateOne(
+            { _id: toolId },
+            {
+                $push: { comments: comment._id }
+            }
+        );
+
+        if (response.modifiedCount == 1) {
+            res.json({ message: "done", success: true }).status(StatusCodes.UNAUTHORIZED);
+        } else {
+            res.json({ message: "Error adding comment", success: false }).status(StatusCodes.INTERNAL_SERVER_ERROR);
+        }
+    } catch (e: any) {
+        console.log(e.message);
+        return res.json({ message: "error", success: false })
+    }
+}
+
+const addLike = async (req: Request<{ id: string }, resBody>, res: Response<resBody>) => {
+    try {
+        const toolId = req.params.id;
+        const response = await Tool.updateOne({ _id: toolId }, { $inc: { likes: 1 } });
+        if (response.modifiedCount == 1) {
+            res.json({ message: "Done", success: true }).status(StatusCodes.OK);
+        }else{
+            console.log(response);
+            res.json({ message: "Error occured", success: false }).status(StatusCodes.OK);
+        }
+    } catch (error) {
+        res.json({ message: "Error occured", success: false }).status(StatusCodes.OK);
+    }
+}
+
+const addDislike = async (req: Request<{ id: string }, resBody>, res: Response<resBody>) => {
+    try {
+        const toolId = req.params.id;
+        console.log(1);
+        const response = await Tool.updateOne({ _id: toolId }, { $inc: { dislikes: 1 } });
+        if (response.modifiedCount == 1) {
+            res.json({ message: "Done", success: true }).status(StatusCodes.OK);
+        }
+    } catch (error) {
+        res.json({ message: "Error occured", success: false }).status(StatusCodes.OK);
+    }
+}
+export { addTool, addFiles, searchTools, getToolDetails, addComment, addDislike, addLike }

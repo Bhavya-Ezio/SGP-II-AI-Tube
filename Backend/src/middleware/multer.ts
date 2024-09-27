@@ -19,9 +19,9 @@ const upload = multer({
             cb(null, { fieldName: file.fieldname });
         },
         key: (req: Request, file: Express.Multer.File, cb: (error: any, key: string) => void) => {
-            cb(null, Date.now() + '-' + file.originalname);
+            cb(null, ("id" in req.user! ? req.user.id : "") + '-' + file.originalname);
         },
     }),
 });
 
-export {upload};
+export { upload };
