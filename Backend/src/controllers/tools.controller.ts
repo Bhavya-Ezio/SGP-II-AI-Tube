@@ -3,8 +3,10 @@ import { resBody } from '../models/req&res.js';
 import { Request, Response } from "express";
 //Schemas
 import { Comment, Tool } from '../schemas/tool.schema.js';
+import LikeDislike from '../schemas/likeDislike.schema.js';
 
 import { StatusCodes } from 'http-status-codes';
+import { User } from '../models/user.js';
 
 const addTool = async (req: Request<{}, resBody, Tools>, res: Response<resBody>) => {
     try {
@@ -173,12 +175,29 @@ const addComment = async (req: Request<{ id: string }, resBody, Comments>, res: 
 const addLike = async (req: Request<{ id: string }, resBody>, res: Response<resBody>) => {
     try {
         const toolId = req.params.id;
-        const response = await Tool.updateOne({ _id: toolId }, { $inc: { likes: 1 } });
-        if (response.modifiedCount == 1) {
-            res.json({ message: "Done", success: true }).status(StatusCodes.OK);
-        }else{
-            console.log(response);
-            res.json({ message: "Error occured", success: false }).status(StatusCodes.OK);
+        const userId = ("id" in req.user!) ? req.user.id : "";
+        const likeDislike = await LikeDislike.findOne({ toolId, userId });
+        if (likeDislike) {
+            if (likeDislike.like) {
+                res.json({ message: "Already liked", success: false }).status(StatusCodes.OK);
+            } else {
+                const response = await Tool.updateOne({ _id: toolId }, { $inc: { likes: 1, dislikes: -1 } });
+                if (response.modifiedCount == 1) {
+                    await LikeDislike.updateOne({ toolId, userId }, { like: true });
+                    res.json({ message: "Done", success: true }).status(StatusCodes.OK);
+                } else {
+                    res.json({ message: "Error occured", success: false }).status(StatusCodes.INTERNAL_SERVER_ERROR);
+                }
+            }
+        } else {
+            const likeDislike = new LikeDislike({ toolId, userId, like: true });
+            await likeDislike.save();
+            const response = await Tool.updateOne({ _id: toolId }, { $inc: { likes: 1 } });
+            if (response.modifiedCount == 1) {
+                res.json({ message: "Done", success: true }).status(StatusCodes.OK);
+            } else {
+                res.json({ message: "Error occured", success: false }).status(StatusCodes.INTERNAL_SERVER_ERROR);
+            }
         }
     } catch (error) {
         res.json({ message: "Error occured", success: false }).status(StatusCodes.OK);
@@ -188,10 +207,29 @@ const addLike = async (req: Request<{ id: string }, resBody>, res: Response<resB
 const addDislike = async (req: Request<{ id: string }, resBody>, res: Response<resBody>) => {
     try {
         const toolId = req.params.id;
-        console.log(1);
-        const response = await Tool.updateOne({ _id: toolId }, { $inc: { dislikes: 1 } });
-        if (response.modifiedCount == 1) {
-            res.json({ message: "Done", success: true }).status(StatusCodes.OK);
+        const userId = ("id" in req.user!) ? req.user.id : "";
+        const likeDislike = await LikeDislike.findOne({ toolId, userId });
+        if (likeDislike) {
+            if (!likeDislike.like) {
+                res.json({ message: "Already disliked", success: false }).status(StatusCodes.OK);
+            } else {
+                const response = await Tool.updateOne({ _id: toolId }, { $inc: { dislikes: 1, likes: -1 } });
+                if (response.modifiedCount == 1) {
+                    await LikeDislike.updateOne({ toolId, userId }, { like: false });
+                    res.json({ message: "Done", success: true }).status(StatusCodes.OK);
+                } else {
+                    res.json({ message: "Error occured", success: false }).status(StatusCodes.INTERNAL_SERVER_ERROR);
+                }
+            }
+        } else {
+            const likeDislike = new LikeDislike({ toolId, userId, like: false });
+            await likeDislike.save();
+            const response = await Tool.updateOne({ _id: toolId }, { $inc: { dislikes: 1 } });
+            if (response.modifiedCount == 1) {
+                res.json({ message: "Done", success: true }).status(StatusCodes.OK);
+            } else {
+                res.json({ message: "Error occured", success: false }).status(StatusCodes.INTERNAL_SERVER_ERROR);
+            }
         }
     } catch (error) {
         res.json({ message: "Error occured", success: false }).status(StatusCodes.OK);
