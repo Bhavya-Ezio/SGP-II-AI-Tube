@@ -5,3 +5,9 @@ export type LikeDislike = {
     userId: Types.ObjectId,
     like: boolean
 }
+
+export type View = {
+    toolId: Types.ObjectId,
+    userId: Types.ObjectId,
+}
+

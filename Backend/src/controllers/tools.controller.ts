@@ -3,10 +3,9 @@ import { resBody } from '../models/req&res.js';
 import { Request, Response } from "express";
 //Schemas
 import { Comment, Tool } from '../schemas/tool.schema.js';
-import LikeDislike from '../schemas/likeDislike.schema.js';
+import { LikeDislikes, Views } from '../schemas/analytics.schema.js';
 
 import { StatusCodes } from 'http-status-codes';
-import { User } from '../models/user.js';
 
 const addTool = async (req: Request<{}, resBody, Tools>, res: Response<resBody>) => {
     try {
@@ -176,21 +175,21 @@ const addLike = async (req: Request<{ id: string }, resBody>, res: Response<resB
     try {
         const toolId = req.params.id;
         const userId = ("id" in req.user!) ? req.user.id : "";
-        const likeDislike = await LikeDislike.findOne({ toolId, userId });
+        const likeDislike = await LikeDislikes.findOne({ toolId, userId });
         if (likeDislike) {
             if (likeDislike.like) {
                 res.json({ message: "Already liked", success: false }).status(StatusCodes.OK);
             } else {
                 const response = await Tool.updateOne({ _id: toolId }, { $inc: { likes: 1, dislikes: -1 } });
                 if (response.modifiedCount == 1) {
-                    await LikeDislike.updateOne({ toolId, userId }, { like: true });
+                    await LikeDislikes.updateOne({ toolId, userId }, { like: true });
                     res.json({ message: "Done", success: true }).status(StatusCodes.OK);
                 } else {
                     res.json({ message: "Error occured", success: false }).status(StatusCodes.INTERNAL_SERVER_ERROR);
                 }
             }
         } else {
-            const likeDislike = new LikeDislike({ toolId, userId, like: true });
+            const likeDislike = new LikeDislikes({ toolId, userId, like: true });
             await likeDislike.save();
             const response = await Tool.updateOne({ _id: toolId }, { $inc: { likes: 1 } });
             if (response.modifiedCount == 1) {
@@ -208,21 +207,21 @@ const addDislike = async (req: Request<{ id: string }, resBody>, res: Response<r
     try {
         const toolId = req.params.id;
         const userId = ("id" in req.user!) ? req.user.id : "";
-        const likeDislike = await LikeDislike.findOne({ toolId, userId });
+        const likeDislike = await LikeDislikes.findOne({ toolId, userId });
         if (likeDislike) {
             if (!likeDislike.like) {
                 res.json({ message: "Already disliked", success: false }).status(StatusCodes.OK);
             } else {
                 const response = await Tool.updateOne({ _id: toolId }, { $inc: { dislikes: 1, likes: -1 } });
                 if (response.modifiedCount == 1) {
-                    await LikeDislike.updateOne({ toolId, userId }, { like: false });
+                    await LikeDislikes.updateOne({ toolId, userId }, { like: false });
                     res.json({ message: "Done", success: true }).status(StatusCodes.OK);
                 } else {
                     res.json({ message: "Error occured", success: false }).status(StatusCodes.INTERNAL_SERVER_ERROR);
                 }
             }
         } else {
-            const likeDislike = new LikeDislike({ toolId, userId, like: false });
+            const likeDislike = new LikeDislikes({ toolId, userId, like: false });
             await likeDislike.save();
             const response = await Tool.updateOne({ _id: toolId }, { $inc: { dislikes: 1 } });
             if (response.modifiedCount == 1) {
@@ -235,4 +234,29 @@ const addDislike = async (req: Request<{ id: string }, resBody>, res: Response<r
         res.json({ message: "Error occured", success: false }).status(StatusCodes.OK);
     }
 }
-export { addTool, addFiles, searchTools, getToolDetails, addComment, addDislike, addLike }
+
+
+const addView = async (req: Request<{ id: string }, resBody>, res: Response<resBody>) => {
+    try {
+        const toolId = req.params.id;
+        const userId = ("id" in req.user!) ? req.user.id : "";
+        const view = await Views.findOne({ toolId, userId });
+        if (view) {
+            res.json({ message: "Already viewed", success: false }).status(StatusCodes.OK);
+        } else {
+            const view = new Views({ toolId, userId });
+            await view.save();
+            const response = await Tool.updateOne({ _id: toolId }, { $inc: { views: 1 } });
+            if (response.modifiedCount == 1) {
+                res.json({ message: "View added", success: true }).status(StatusCodes.OK);
+            } else {
+                res.json({ message: "Error occurred", success: false }).status(StatusCodes.INTERNAL_SERVER_ERROR);
+            }
+        }
+    } catch (error) {
+        res.json({ message: "Error occurred", success: false }).status(StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+}
+
+
+export { addTool, addFiles, searchTools, getToolDetails, addComment, addDislike, addLike, addView }
