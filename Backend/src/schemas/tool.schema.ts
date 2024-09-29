@@ -14,7 +14,7 @@ const toolsSchema = new Schema<Tools>({
     category: { type: String, required: true }, // Added category field
     likes: Number,
     dislikes: Number,
-    shares: Number,
+    shares: { type: Number, default: 0 },
     comments: [{ type: Schema.Types.ObjectId, ref: 'comments' }],
     views: Number,
     description: String,

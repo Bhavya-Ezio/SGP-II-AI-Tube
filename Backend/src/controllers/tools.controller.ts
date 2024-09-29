@@ -278,4 +278,19 @@ const addHistory = async (req: Request<{ id: string }, resBody>, res: Response<r
     }
 }
 
-export { addTool, addFiles, searchTools, getToolDetails, addComment, addDislike, addLike, addView, addHistory }
+const addShare = async (req: Request<{ id: string }, resBody>, res: Response<resBody>) => {
+    const toolId = req.params.id;
+    const tool = await Tool.updateOne({ _id: toolId }, { $inc: { shares: 1 } });
+    if (tool.modifiedCount == 1) {
+        return res.json({
+            message: "Share added",
+            success: true
+        }).status(StatusCodes.OK);
+    } else {
+        return res.json({
+            message: "Error occurred",
+            success: false
+        }).status(StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+}
+export { addTool, addFiles, searchTools, getToolDetails, addComment, addDislike, addLike, addView, addHistory, addShare }

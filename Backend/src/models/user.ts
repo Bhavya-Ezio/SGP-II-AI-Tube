@@ -15,5 +15,6 @@ export type User = {
     "verified": boolean,
     "views": number,  
     "noOfTools": number,
-    "googleID": string
+    "googleID": string,
+    "shares": number
 }

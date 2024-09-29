@@ -119,4 +119,33 @@ const getProfile = async (req: Request, res: Response<resBody>) => {
     })
 }
 
-export { getProfile, loginUser, createUser }
+const addShare = async (req: Request, res: Response<resBody>) => {
+    try {
+        if (!req.user || !("id" in req.user)) {
+            return res.json({
+                message: "Unauthorized",
+                success: false
+            }).status(StatusCodes.UNAUTHORIZED);
+        }
+        const user1 = await user.findById(req.user.id);
+        if (!user1) {
+            return res.json({
+                message: "User not found",
+                success: false
+            }).status(StatusCodes.NOT_FOUND);
+        }
+        user1.shares++;
+        await user1.save();
+        return res.json({
+            message: "Share added",
+            success: true
+        }).status(StatusCodes.OK);
+    } catch (error) {
+        return res.json({
+            message: "Internal server error",
+            success: false
+        }).status(StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+}
+
+export { getProfile, loginUser, createUser, addShare }

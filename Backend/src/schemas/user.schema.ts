@@ -57,6 +57,10 @@ const userSchema: Schema<User> = new Schema({
     },
     "googleID": {
         type: String,
+    },
+    "shares": {
+        type: Number,
+        default: 0,
     }
 })
 
