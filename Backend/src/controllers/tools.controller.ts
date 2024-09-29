@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 //Schemas
 import { Comment, Tool } from '../schemas/tool.schema.js';
 import { LikeDislikes, Views } from '../schemas/analytics.schema.js';
+import { History } from '../schemas/history.schema.js';
 
 import { StatusCodes } from 'http-status-codes';
 
@@ -258,5 +259,23 @@ const addView = async (req: Request<{ id: string }, resBody>, res: Response<resB
     }
 }
 
+const addHistory = async (req: Request<{ id: string }, resBody>, res: Response<resBody>) => {
+    try {
+        const toolId = req.params.id;
+        const userId = ("id" in req.user!) ? req.user.id : "";
+        const history = await History.findOne({ toolId, userId });
+        if (history) {
+            history.viewedAt = new Date();
+            await history.save();
+            res.json({ message: "History updated", success: false }).status(StatusCodes.OK);
+        } else {
+            const history = new History({ toolId, userId });
+            await history.save();
+            res.json({ message: "History added", success: true }).status(StatusCodes.OK);
+        }
+    } catch (error) {
+        res.json({ message: "Error occurred", success: false }).status(StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+}
 
-export { addTool, addFiles, searchTools, getToolDetails, addComment, addDislike, addLike, addView }
+export { addTool, addFiles, searchTools, getToolDetails, addComment, addDislike, addLike, addView, addHistory }

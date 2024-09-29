@@ -27,7 +27,7 @@ const userSchema: Schema<User> = new Schema({
         enum: ["male", "female"]
     },
     "SubTo": {
-        type: [String],
+        type: [Types.ObjectId],
         default: [],
     },
     "subscribers": {

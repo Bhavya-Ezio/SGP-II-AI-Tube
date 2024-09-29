@@ -4,7 +4,7 @@ import { Router, json } from 'express';
 import { upload } from '../middleware/multer.js';
 import { authenticateToken } from '../middleware/authenticate.js';
 
-import { addTool, addFiles, searchTools, addComment, getToolDetails, addLike, addDislike, addView } from '../controllers/tools.controller.js';
+import { addTool, addFiles, searchTools, addComment, getToolDetails, addLike, addDislike, addView, addHistory } from '../controllers/tools.controller.js';
 
 const router = Router();
 router.use(json());
@@ -24,5 +24,7 @@ router.route("/addLike/:id").all(authenticateToken).post(addLike);
 router.route("/addDislike/:id").all(authenticateToken).post(addDislike);
 
 router.route("/addView/:id").all(authenticateToken).post(addView);
+
+router.route("/addHistory/:id").all(authenticateToken).post(addHistory);
 
 export default router;

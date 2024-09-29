@@ -7,7 +7,7 @@ export type User = {
     "password": string,
     "DOB": Date,
     "gender": String,
-    "SubTo": Array<string>,
+    "SubTo": Array<Types.ObjectId>,
     "subscribers": number,
     "Description": string,
     "About": Array<string>,
