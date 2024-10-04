@@ -5,6 +5,7 @@ import { Request, Response } from "express";
 import { Comment, Tool } from '../schemas/tool.schema.js';
 import { LikeDislikes, Views } from '../schemas/analytics.schema.js';
 import { History } from '../schemas/history.schema.js';
+import { Category } from '../schemas/categories.js';
 
 import { StatusCodes } from 'http-status-codes';
 
@@ -293,4 +294,21 @@ const addShare = async (req: Request<{ id: string }, resBody>, res: Response<res
         }).status(StatusCodes.INTERNAL_SERVER_ERROR);
     }
 }
-export { addTool, addFiles, searchTools, getToolDetails, addComment, addDislike, addLike, addView, addHistory, addShare }
+
+const getCategories = async (req: Request, res: Response) => {
+    try {
+        const categories = await Category.find();
+        return res.json({
+            message: "Categories fetched successfully",
+            success: true,
+            data: categories
+        }).status(StatusCodes.OK);
+    } catch (error) {
+        return res.json({
+            message: "Error fetching categories",
+            success: false
+        }).status(StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+}
+
+export { addTool, addFiles, searchTools, getToolDetails, addComment, addDislike, addLike, addView, addHistory, addShare, getCategories }

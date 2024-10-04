@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
+import { category } from "./categories";
 
 export type Comments = {
-    "_id": Types.ObjectId,
     "userId": Types.ObjectId,
     "text": String,
     "timestamp": Date,
@@ -9,10 +9,9 @@ export type Comments = {
 }
 
 export type Tools = {
-    "_id": Types.ObjectId,
     "uploaderID": Types.ObjectId,
     "name": String,
-    "category": String, // Added category field
+    "category": Array<Types.ObjectId>,
     "likes": Number,
     "dislikes": Number,
     "shares": Number,

@@ -1,5 +1,6 @@
 import { Comments, Tools, toolAnalytics, downloadHistory } from "../models/tools";
 import { model, Schema, Types } from "mongoose";
+import { Category } from "./categories";
 
 const commentSchema = new Schema<Comments>({
     text: String,
@@ -11,7 +12,7 @@ const Comment = model('comments', commentSchema);
 const toolsSchema = new Schema<Tools>({
     uploaderID: { type: Schema.Types.ObjectId, ref: 'users' },
     name: { type: String, required: true },
-    category: { type: String, required: true }, // Added category field
+    category: { type: [Schema.Types.ObjectId], ref: 'categories', required: true },
     likes: Number,
     dislikes: Number,
     shares: { type: Number, default: 0 },
