@@ -148,4 +148,35 @@ const addShare = async (req: Request, res: Response<resBody>) => {
     }
 }
 
-export { getProfile, loginUser, createUser, addShare }
+const updateUser = async (body: User, id: Types.ObjectId): Promise<resBody> => {
+    const { name, email, username, password, DOB, gender, Description, About } = body;
+    try {
+        const u = await user.findById(id);
+        if (!u) {
+            return {
+                message: "User not found",
+                success: false
+            }
+        }
+        u.name = name;
+        u.email = email;
+        u.username = username;
+        u.password = password;
+        u.DOB = DOB;
+        u.gender = gender;
+        u.Description = Description;
+        u.About = About;
+        await u.save();
+        return {
+            message: "User updated",
+            success: true
+        }
+    } catch (error) {
+        return {
+            message: "Internal server error",
+            success: false
+        }
+    }
+}
+
+export { getProfile, loginUser, createUser, addShare,updateUser }

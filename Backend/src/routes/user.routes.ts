@@ -6,7 +6,8 @@ import { StatusCodes } from "http-status-codes";
 import jwt from "jsonwebtoken";
 import { resBody } from "../models/req&res.js";
 import { User } from "../models/user.js";
-import { createUser, getProfile, loginUser } from "../controllers/user.controller.js";
+import { createUser, getProfile, loginUser, updateUser } from "../controllers/user.controller.js";
+import { Types } from "mongoose";
 
 
 router.post("/signup", async (req: Request<{}, resBody, User>, res: Response<resBody>) => {
@@ -63,6 +64,14 @@ router.post("/login", async (req: Request<{}, resBody, User>, res: Response<resB
     }
 })
 
+router.get("/logout", authenticateToken, (req: Request, res: Response) => {
+    res.clearCookie("accessToken");
+    res.json({
+        message: "Logged out",
+        success: true
+    }).status(StatusCodes.OK)
+})
+
 router.get("/verify", authenticateToken, (req: Request, res: Response) => {
     res.json({
         message: "done",
@@ -70,5 +79,22 @@ router.get("/verify", authenticateToken, (req: Request, res: Response) => {
     })
 })
 
-router.get("/profile",authenticateToken,getProfile)
+router.put("/update", authenticateToken, async (req: Request<{}, resBody, User>, res: Response<resBody>) => {
+    const body = req.body;
+    const id = ((req.user && "id" in req.user) ? req.user.id : new Types.ObjectId()) as Types.ObjectId;
+    const response = await updateUser(body, id);
+    if (response.success) {
+        return res.json({
+            message: response.message,
+            success: true,
+        }).status(StatusCodes.OK)
+    } else {
+        return res.json({
+            message: response.message,
+            success: false,
+        }).status(StatusCodes.INTERNAL_SERVER_ERROR)
+    }
+})
+
+router.get("/profile", authenticateToken, getProfile)
 export default router;
