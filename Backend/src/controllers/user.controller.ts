@@ -179,4 +179,29 @@ const updateUser = async (body: User, id: Types.ObjectId): Promise<resBody> => {
     }
 }
 
-export { getProfile, loginUser, createUser, addShare,updateUser }
+const addImg = async (id: Types.ObjectId, file: Express.Multer.File): Promise<resBody> => {
+    try {
+        const u = await user.findById(id);
+        if (!u) {
+            return {
+                message: "User not found",
+                success: false
+            }
+        }
+        console.log(file);
+        if(file && "key" in file){
+            u.ProfilePic = file.key as string;
+        }
+        await u.save();
+        return {
+            message: "Image added",
+            success: true
+        }
+    } catch (error) {
+        return {
+            message: "Internal server error",
+            success: false
+        }
+    }
+}
+export { getProfile, loginUser, createUser, addShare, updateUser, addImg }
