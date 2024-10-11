@@ -6,8 +6,10 @@ import userRoute from "./routes/user.routes.js";
 import verifyRoute from "./routes/verify.routes.js";
 import authRoute from "./routes/auth.routes.js";
 import toolsRoute from "./routes/tools.routes.js";
+import channelRouter from "./routes/channel.routes.js"
 import passport from "passport";
 import cookieParser from 'cookie-parser';
+
 let app = express();
 app.use(cors({
     origin: "http://localhost:3000",
@@ -25,6 +27,7 @@ app.use("/user", userRoute)
 app.use("/verify", verifyRoute)
 app.use("/auth", authRoute)
 app.use("/tools",toolsRoute)
+app.use("/channel",channelRouter)
 
 mongoose.connect(process.env.MONGODB_URI!).then(() => {
     app.listen(process.env.PORT!, () => {

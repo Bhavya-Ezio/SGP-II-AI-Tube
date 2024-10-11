@@ -36,4 +36,30 @@ const addSubscriber = async (req: Request<{ channelId: string }, resBody, User>,
     }
 }
 
-export { addSubscriber };
+const getDetails = async (req: Request<{ channelName: string }, resBody, User>, res: Response<resBody>) => {
+    try {
+        const { channelName } = req.params;
+        const channel1 = await user.findOne({ username: channelName }).select("subscribers noOfTools views");
+
+        if (channel1) {
+            return res.json({
+                message: "Details sent.",
+                success: true,
+                data: channel1
+            })
+        } else {
+            return res.json({
+                message: "Error fetching data",
+                success: false
+            })
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            message: 'Internal server error',
+            success: false
+        });
+    }
+}
+
+export { addSubscriber, getDetails };
