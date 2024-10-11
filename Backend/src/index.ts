@@ -9,7 +9,10 @@ import toolsRoute from "./routes/tools.routes.js";
 import passport from "passport";
 import cookieParser from 'cookie-parser';
 let app = express();
-app.use(cors());
+app.use(cors({
+    origin: "http://localhost:3000",
+    credentials: true
+}));
 app.use(session({
     secret: process.env.ACCESS_TOKEN_SECRET!,
     resave: false,

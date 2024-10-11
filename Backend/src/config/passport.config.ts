@@ -12,14 +12,14 @@ passport.use(
     },
         async (req, accessToken, refreshToken, profile, done) => {
             try {
-                console.log(profile._json);
                 const user1 = await User.findOne({ googleID: profile.id });
                 if (user1) {
                     return done(null, user1);
                 } else {
+                    console.log(profile.name?.familyName);
                     const newUser = new User({
                         googleID: profile.id,
-                        username: profile.displayName,
+                        username: profile.name?.familyName,
                         name: profile._json.name
                     });
                     await newUser.save();

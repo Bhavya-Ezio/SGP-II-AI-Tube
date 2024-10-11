@@ -110,12 +110,12 @@ const getProfile = async (req: Request, res: Response<resBody>) => {
             success: false
         }).status(StatusCodes.UNAUTHORIZED);
     }
-    const details = user.findById(req.user.id).select("name email username DOB gender Description About");
+    const details = await user.findById(req.user.id).select("name email username DOB gender Description About");
 
     return res.json({
         message: "data sent",
         success: true,
-        data: details,
+        data: details!,
     })
 }
 

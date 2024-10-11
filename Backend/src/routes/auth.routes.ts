@@ -14,7 +14,7 @@ router.get('/google/redirect', passport.authenticate('google'), (req: Request<{}
     console.log("redirected");
     console.log((req.user as User)._id);
     const token = jwt.sign({ id: (req.user as User)._id }, process.env.ACCESS_TOKEN_SECRET!)
-    res.cookie("accessToken", token).redirect("to frontend home page")//change it later
+    res.cookie("accessToken", token).redirect("http://localhost:3000")//change it later
 })
 
 export default router;
