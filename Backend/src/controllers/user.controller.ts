@@ -50,17 +50,13 @@ const sendVerificationEmail = async (_id: Types.ObjectId, email: string): Promis
 }
 
 const createUser = async (body: User): Promise<resBody> => {
-    const { name, email, username, password, DOB, gender, Description, About } = body;
+    const { name, email, username, password } = body;
     const hash = await bcrypt.hash(password, 10);
     const u = new user({
         name: name,
         email: email,
         username: username,
         password: hash,
-        DOB: DOB,
-        gender: gender,
-        Description: Description,
-        About: About,
     });
     const verificationRes = await sendVerificationEmail(u._id, u.email);
     if (verificationRes.success) {
@@ -69,6 +65,28 @@ const createUser = async (body: User): Promise<resBody> => {
     } else {
         return verificationRes;
     }
+}
+
+const addDetails = async (data: User): Promise<resBody> => {
+    const { username, DOB, gender, Description, About } = data;
+    const user1 = await user.findOne({ username: username });
+    if (user1) {
+        user1.DOB = DOB;
+        user1.Description = Description;
+        user1.About = About;
+        user1.gender = gender;
+        await user1.save();
+        return {
+            message:"Details added",
+            success:true,
+        };
+    } else {
+        return {
+            message: "Username not found",
+            success: false,
+        }
+    }
+
 }
 
 const loginUser = async (body: User): Promise<loginReturn> => {
@@ -189,7 +207,7 @@ const addImg = async (id: Types.ObjectId, file: Express.Multer.File): Promise<re
             }
         }
         console.log(file);
-        if(file && "key" in file){
+        if (file && "key" in file) {
             u.ProfilePic = file.key as string;
         }
         await u.save();
@@ -204,4 +222,4 @@ const addImg = async (id: Types.ObjectId, file: Express.Multer.File): Promise<re
         }
     }
 }
-export { getProfile, loginUser, createUser, addShare, updateUser, addImg }
+export { getProfile, loginUser, createUser, addShare, updateUser, addImg,addDetails }

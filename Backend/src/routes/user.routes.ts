@@ -6,7 +6,7 @@ import { StatusCodes } from "http-status-codes";
 import jwt from "jsonwebtoken";
 import { resBody } from "../models/req&res.js";
 import { User } from "../models/user.js";
-import { createUser, getProfile, loginUser, updateUser, addImg } from "../controllers/user.controller.js";
+import { createUser, getProfile, loginUser, updateUser, addImg ,addDetails} from "../controllers/user.controller.js";
 import { Types } from "mongoose";
 import { upload } from "../middleware/multer.js";
 
@@ -14,7 +14,7 @@ import { upload } from "../middleware/multer.js";
 router.post("/signup", async (req: Request<{}, resBody, User>, res: Response<resBody>) => {
     try {
         const body = req.body;
-        if (!body.name || !body.email || !body.username || !body.password || !body.DOB || !body.gender || !body.Description || !body.About) {
+        if (!body.name || !body.email || !body.username || !body.password) {
             return res.json({
                 message: "Please fill all the fields",
                 success: false,
@@ -36,6 +36,36 @@ router.post("/signup", async (req: Request<{}, resBody, User>, res: Response<res
         console.log(error);
         return res.json({
             message: "Error adding user",
+            success: false,
+        }).status(StatusCodes.INTERNAL_SERVER_ERROR)
+    }
+})
+
+router.post("/addDetails", async (req: Request<{}, resBody, User>, res: Response<resBody>) => {
+    try {
+        const body = req.body;
+        if (!body.username || !body.DOB || !body.gender || !body.Description || !body.About) {
+            return res.json({
+                message: "Please fill all the fields",
+                success: false,
+            }).status(StatusCodes.BAD_REQUEST)
+        }
+        const resposne = await addDetails(body);
+        if (resposne.success) {
+            return res.json({
+                message: "User details added",
+                success: true,
+            }).status(StatusCodes.OK)
+        } else {
+            return res.json({
+                message: "Error adding details",
+                success: false,
+            }).status(StatusCodes.INTERNAL_SERVER_ERROR)
+        }
+    } catch (error: any) {
+        console.log(error);
+        return res.json({
+            message: "Error adding details",
             success: false,
         }).status(StatusCodes.INTERNAL_SERVER_ERROR)
     }
