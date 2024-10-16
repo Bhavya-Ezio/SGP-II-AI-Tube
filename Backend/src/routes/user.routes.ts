@@ -6,8 +6,8 @@ import { StatusCodes } from "http-status-codes";
 import jwt from "jsonwebtoken";
 import { resBody } from "../models/req&res.js";
 import { User } from "../models/user.js";
-import { createUser, getProfile, loginUser, updateUser, addImg ,addDetails} from "../controllers/user.controller.js";
-import { Types } from "mongoose";
+import { createUser, getProfile, loginUser, updateUser, addImg, addDetails, getHistory } from "../controllers/user.controller.js";
+import { ObjectId, Types } from "mongoose";
 import { upload } from "../middleware/multer.js";
 
 
@@ -79,6 +79,7 @@ router.post("/addImg", authenticateToken, upload.single("image"), async (req: Re
             return res.json({
                 message: response.message,
                 success: true,
+                data: response.data,
             }).status(StatusCodes.OK)
         } else {
             return res.json({
@@ -106,7 +107,7 @@ router.post("/login", async (req: Request<{}, resBody, User>, res: Response<resB
     if (response.success) {
         const id = response.data;
         const token = jwt.sign({ id: response.data }, process.env.ACCESS_TOKEN_SECRET!);
-        return res.cookie("accessToken", token).json({
+        return res.cookie("accessToken", token, { maxAge: 7 * 24 * 60 * 60 * 1000 }).json({
             message: response.message,
             success: true,
         }).status(StatusCodes.OK);
@@ -151,4 +152,24 @@ router.put("/update", authenticateToken, async (req: Request<{}, resBody, User>,
 })
 
 router.get("/profile", authenticateToken, getProfile)
+
+router.get("/getHistory", authenticateToken, async (req: Request<{}, resBody, User>, res: Response<resBody>) => {
+    try {
+        if (req.user && "id" in req.user) {
+            const id = req.user.id as Types.ObjectId;
+            const response = await getHistory(id);
+            if (response.success) {
+                return res.json(response).status(StatusCodes.OK);
+            } else {
+                return res.json(response).status(StatusCodes.INTERNAL_SERVER_ERROR);
+            }
+        }
+    } catch (error: any) {
+        console.log(error.message);
+        return res.json({
+            message: "Error fetching data",
+            success: false,
+        }).status(StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+})
 export default router;

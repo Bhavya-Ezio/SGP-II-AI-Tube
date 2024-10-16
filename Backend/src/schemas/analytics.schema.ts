@@ -28,8 +28,15 @@ const viewSchema: Schema<View> = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'users',
         required: true
+    },
+    viewedAt: {
+        type: Date,
+        required: true
     }
+},{
+    timestamps: true,
 })
 
+viewSchema.index({ toolId: 1, userId: 1 }, { unique: true });
 export const LikeDislikes = model('likeDislikes', likeDislikeSchema);
 export const Views = model('views', viewSchema);

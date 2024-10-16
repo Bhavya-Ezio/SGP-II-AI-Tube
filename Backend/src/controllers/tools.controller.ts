@@ -4,14 +4,13 @@ import { Request, Response } from "express";
 //Schemas
 import { Comment, Tool } from '../schemas/tool.schema.js';
 import { LikeDislikes, Views } from '../schemas/analytics.schema.js';
-import { History } from '../schemas/history.schema.js';
 import { Category } from '../schemas/categories.js';
 
 import { StatusCodes } from 'http-status-codes';
 
 const addTool = async (req: Request<{}, resBody, Tools>, res: Response<resBody>) => {
     try {
-        const { uploaderID, name, description, category } = req.body;
+        const { name, description, /* category, */ price } = req.body;
         if (!req.user || !('id' in req.user)) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 message: "Unauthorized",
@@ -23,7 +22,8 @@ const addTool = async (req: Request<{}, resBody, Tools>, res: Response<resBody>)
             uploaderID: req.user.id,
             name: name,
             description,
-            category,
+            price,
+            /* category, */
             likes: 0,
             dislikes: 0,
             comments: [],
@@ -237,16 +237,17 @@ const addDislike = async (req: Request<{ id: string }, resBody>, res: Response<r
     }
 }
 
-
 const addView = async (req: Request<{ id: string }, resBody>, res: Response<resBody>) => {
     try {
         const toolId = req.params.id;
         const userId = ("id" in req.user!) ? req.user.id : "";
         const view = await Views.findOne({ toolId, userId });
         if (view) {
-            res.json({ message: "Already viewed", success: false }).status(StatusCodes.OK);
+            view.viewedAt = new Date();
+            await view.save();
+            res.json({ message: "Updated", success: true }).status(StatusCodes.OK);
         } else {
-            const view = new Views({ toolId, userId });
+            const view = new Views({ toolId, userId, viewedAt: new Date() });
             await view.save();
             const response = await Tool.updateOne({ _id: toolId }, { $inc: { views: 1 } });
             if (response.modifiedCount == 1) {
@@ -254,25 +255,6 @@ const addView = async (req: Request<{ id: string }, resBody>, res: Response<resB
             } else {
                 res.json({ message: "Error occurred", success: false }).status(StatusCodes.INTERNAL_SERVER_ERROR);
             }
-        }
-    } catch (error) {
-        res.json({ message: "Error occurred", success: false }).status(StatusCodes.INTERNAL_SERVER_ERROR);
-    }
-}
-
-const addHistory = async (req: Request<{ id: string }, resBody>, res: Response<resBody>) => {
-    try {
-        const toolId = req.params.id;
-        const userId = ("id" in req.user!) ? req.user.id : "";
-        const history = await History.findOne({ toolId, userId });
-        if (history) {
-            history.viewedAt = new Date();
-            await history.save();
-            res.json({ message: "History updated", success: false }).status(StatusCodes.OK);
-        } else {
-            const history = new History({ toolId, userId });
-            await history.save();
-            res.json({ message: "History added", success: true }).status(StatusCodes.OK);
         }
     } catch (error) {
         res.json({ message: "Error occurred", success: false }).status(StatusCodes.INTERNAL_SERVER_ERROR);
@@ -311,4 +293,27 @@ const getCategories = async (req: Request, res: Response) => {
     }
 }
 
-export { addTool, addFiles, searchTools, getToolDetails, addComment, addDislike, addLike, addView, addHistory, addShare, getCategories }
+const deleteTool = async (req: Request<{ id: string }, resBody>, res: Response<resBody>) => {
+    try {
+        const toolId = req.params.id;
+        const response = await Tool.deleteOne({ _id: toolId });
+        if (response.deletedCount === 1) {
+            return res.json({
+                message: "Deleted Successfully",
+                success: true,
+            })
+        } else {
+            return res.json({
+                message: "Error Occured while deleting",
+                success: false,
+            })
+        }
+    } catch (e) {
+        return res.json({
+            message: "Error Occured while deleting",
+            success: false,
+        })
+    }
+}
+
+export { addTool, addFiles, searchTools, getToolDetails, addComment, addDislike, addLike, addView, addShare, getCategories, deleteTool }

@@ -7,6 +7,7 @@ import verifyRoute from "./routes/verify.routes.js";
 import authRoute from "./routes/auth.routes.js";
 import toolsRoute from "./routes/tools.routes.js";
 import channelRouter from "./routes/channel.routes.js"
+import loadRouter from "./routes/load.routes.js";
 import passport from "passport";
 import cookieParser from 'cookie-parser';
 
@@ -26,8 +27,9 @@ app.use(passport.session());
 app.use("/user", userRoute)
 app.use("/verify", verifyRoute)
 app.use("/auth", authRoute)
-app.use("/tools",toolsRoute)
-app.use("/channel",channelRouter)
+app.use("/tools", toolsRoute)
+app.use("/channel", channelRouter)
+app.use("/load", loadRouter)
 
 mongoose.connect(process.env.MONGODB_URI!).then(() => {
     app.listen(process.env.PORT!, () => {

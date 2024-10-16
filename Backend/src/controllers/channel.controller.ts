@@ -3,6 +3,8 @@ import { resBody } from "../models/req&res.js";
 import { User } from "../models/user.js";
 
 import user from "../schemas/user.schema.js";
+import { Tool } from "../schemas/tool.schema.js";
+import { StatusCodes } from "http-status-codes";
 
 const addSubscriber = async (req: Request<{ channelId: string }, resBody, User>, res: Response<resBody>) => {
     try {
@@ -39,7 +41,7 @@ const addSubscriber = async (req: Request<{ channelId: string }, resBody, User>,
 const getDetails = async (req: Request<{ channelName: string }, resBody, User>, res: Response<resBody>) => {
     try {
         const { channelName } = req.params;
-        const channel1 = await user.findOne({ username: channelName }).select("subscribers noOfTools views");
+        const channel1 = await user.findOne({ username: channelName }).select("username subscribers noOfTools views");
 
         if (channel1) {
             return res.json({
@@ -62,4 +64,23 @@ const getDetails = async (req: Request<{ channelName: string }, resBody, User>, 
     }
 }
 
-export { addSubscriber, getDetails };
+const getTools = async (req: Request<{ channelName: string }, resBody, User>, res: Response<resBody>) => {
+    try {
+        const { channelName } = req.params;
+        const u = await user.findOne({ username: channelName })
+        const channel1 = await Tool.find({ uploaderID: u?._id }).select("-__v -uploaderID -videos -files");
+        return res.json({
+            message: "Data sent",
+            success: true,
+            data: channel1
+        }).status(StatusCodes.OK)
+    } catch (e) {
+        console.log(e)  
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            message: "Error fetching data",
+            success: false
+        })
+    }
+}
+
+export { addSubscriber, getDetails, getTools };

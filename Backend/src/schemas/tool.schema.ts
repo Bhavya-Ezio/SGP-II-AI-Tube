@@ -12,7 +12,7 @@ const Comment = model('comments', commentSchema);
 const toolsSchema = new Schema<Tools>({
     uploaderID: { type: Schema.Types.ObjectId, ref: 'users' },
     name: { type: String, required: true },
-    category: { type: [Schema.Types.ObjectId], ref: 'categories', required: true },
+    category: { type: [Schema.Types.ObjectId], ref: 'categories',/*  required: true  */},
     likes: Number,
     dislikes: Number,
     shares: { type: Number, default: 0 },

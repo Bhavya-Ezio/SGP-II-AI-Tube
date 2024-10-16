@@ -11,7 +11,7 @@ export type Comments = {
 export type Tools = {
     "uploaderID": Types.ObjectId,
     "name": String,
-    "category": Array<Types.ObjectId>,
+    "category": String,
     "likes": Number,
     "dislikes": Number,
     "shares": Number,

@@ -1,14 +1,15 @@
 import { Types } from "mongoose";
 import { User } from "../models/user.js";
-import user from "../schemas/user.schema.js";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from 'uuid';
+import user from "../schemas/user.schema.js";
 import userVerification from "../schemas/userVerification.schema.js";
 import nm from "nodemailer";
 import { resBody } from "../models/req&res.js";
 import { Request, Response } from "express";
 import { loginReturn } from "../models/returns.js";
 import { StatusCodes } from "http-status-codes";
+import { Views } from "../schemas/analytics.schema.js";
 
 const transport = nm.createTransport({
     service: "gmail",
@@ -77,8 +78,8 @@ const addDetails = async (data: User): Promise<resBody> => {
         user1.gender = gender;
         await user1.save();
         return {
-            message:"Details added",
-            success:true,
+            message: "Details added",
+            success: true,
         };
     } else {
         return {
@@ -128,7 +129,7 @@ const getProfile = async (req: Request, res: Response<resBody>) => {
             success: false
         }).status(StatusCodes.UNAUTHORIZED);
     }
-    const details = await user.findById(req.user.id).select("name email username DOB gender Description About");
+    const details = await user.findById(req.user.id).select("name email username DOB gender Description About ProfilePic");
 
     return res.json({
         message: "data sent",
@@ -206,14 +207,15 @@ const addImg = async (id: Types.ObjectId, file: Express.Multer.File): Promise<re
                 success: false
             }
         }
-        console.log(file);
+        // console.log(file);
         if (file && "key" in file) {
             u.ProfilePic = file.key as string;
         }
         await u.save();
         return {
             message: "Image added",
-            success: true
+            success: true,
+            data: { key: u.ProfilePic }
         }
     } catch (error) {
         return {
@@ -222,4 +224,29 @@ const addImg = async (id: Types.ObjectId, file: Express.Multer.File): Promise<re
         }
     }
 }
-export { getProfile, loginUser, createUser, addShare, updateUser, addImg,addDetails }
+
+const getHistory = async (id: Types.ObjectId): Promise<resBody> => {
+    try {
+        const h = await Views.find({ userId: id });
+
+        if (h) {
+            return {
+                message: "Data sent",
+                success: true,
+                data: h.sort()
+            }
+        } else {
+            return {
+                message: "Error fetching data",
+                success: false
+            }
+        }
+    } catch (e: any) {
+        console.log(e.message)
+        return {
+            message: "Error fetching data",
+            success: false
+        }
+    }
+}
+export { getProfile, loginUser, createUser, addShare, updateUser, addImg, addDetails, getHistory }

@@ -9,5 +9,6 @@ export type LikeDislike = {
 export type View = {
     toolId: Types.ObjectId,
     userId: Types.ObjectId,
+    viewedAt: Date
 }
 
