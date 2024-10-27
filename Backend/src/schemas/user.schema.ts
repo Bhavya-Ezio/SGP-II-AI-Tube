@@ -61,6 +61,10 @@ const userSchema: Schema<User> = new Schema({
     "shares": {
         type: Number,
         default: 0,
+    },
+    "library": {
+        type: [Types.ObjectId],
+        default: []
     }
 })
 

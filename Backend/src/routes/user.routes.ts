@@ -6,8 +6,8 @@ import { StatusCodes } from "http-status-codes";
 import jwt from "jsonwebtoken";
 import { resBody } from "../models/req&res.js";
 import { User } from "../models/user.js";
-import { createUser, getProfile, loginUser, updateUser, addImg, addDetails, getHistory } from "../controllers/user.controller.js";
-import { ObjectId, Types } from "mongoose";
+import { getLibrary, createUser, getProfile, loginUser, updateUser, addImg, addDetails, getHistory, addToLibrary, removeFromLibrary } from "../controllers/user.controller.js";
+import { Types } from "mongoose";
 import { upload } from "../middleware/multer.js";
 
 
@@ -171,5 +171,86 @@ router.get("/getHistory", authenticateToken, async (req: Request<{}, resBody, Us
             success: false,
         }).status(StatusCodes.INTERNAL_SERVER_ERROR);
     }
+})
+
+router.get("/library", authenticateToken, async (req: Request<{}, resBody, User>, res: Response<resBody>) => {
+    try {
+        if (req.user && "id" in req.user) {
+            const id = req.user.id as Types.ObjectId; // Ensure id is of type ObjectId
+            const response = await getLibrary(id);
+            return res.json(response).status(StatusCodes.OK); // Return the response
+        } else {
+            return res.status(StatusCodes.UNAUTHORIZED).json({
+                message: "User not authorized",
+                success: false,
+            });
+        }
+    } catch (error: any) {
+        console.log(error.message);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            message: "Error fetching library",
+            success: false,
+        });
+    }
+})
+
+router.post("/addToLibrary", authenticateToken, async (req: Request<{}, resBody, User>, res: Response<resBody>) => {
+    try {
+        const { _id } = req.body;
+        if (req.user && "id" in req.user) {
+            const id = req.user.id as Types.ObjectId;
+            const response = await addToLibrary(id, _id);
+            if (response.success) {
+                return res.json(response).status(StatusCodes.OK);
+            } else {
+                return res.json(response).status(StatusCodes.INTERNAL_SERVER_ERROR);
+            }
+        }
+    } catch (error: any) {
+        console.log(error.message);
+        return res.json({
+            message: "Error adding to library",
+            success: false,
+        }).status(StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+
+})
+
+router.post("/remove", authenticateToken, async (req: Request<{}, resBody, User>, res: Response<resBody>) => {
+    try {
+        const { _id } = req.body;
+        if (req.user && "id" in req.user) {
+            console.log("tool id: ",_id);
+            const id = req.user.id as Types.ObjectId;
+            const response = await removeFromLibrary(id, _id);
+            if (response.success) { return res.json(response).status(StatusCodes.OK); }
+            else { return res.json(response).status(StatusCodes.INTERNAL_SERVER_ERROR); }
+        }
+    } catch (error: any) {
+        console.log(error.message);
+        return res.json({ message: "Error removing tool from library", success: false }).status(StatusCodes.OK);
+    }
+})
+
+router.delete("/remove", authenticateToken, async (req: Request<{}, resBody, User>, res: Response<resBody>) => {
+    try {
+        const { _id } = req.body;
+        if (req.user && "id" in req.user) {
+            const id = req.user.id as Types.ObjectId;
+            const response = await removeFromLibrary(id, _id);
+            if (response.success) {
+                return res.json(response).status(StatusCodes.OK);
+            } else {
+                return res.json(response).status(StatusCodes.INTERNAL_SERVER_ERROR);
+            }
+        }
+    } catch (error: any) {
+        console.log(error.message);
+        return res.json({
+            message: "Error adding to library",
+            success: false,
+        }).status(StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+
 })
 export default router;

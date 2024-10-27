@@ -131,7 +131,6 @@ const getToolDetails = async (req: Request<{ id: string }, resBody>, res: Respon
         const toolId = req.params.id;
         const tool = await Tool.findById(toolId).select("-_id -__v")
             .populate("comments", { _id: 0, __v: 0 });
-        console.log(tool);
         return res.json({
             message: "data sent",
             success: true,
@@ -316,4 +315,23 @@ const deleteTool = async (req: Request<{ id: string }, resBody>, res: Response<r
     }
 }
 
-export { addTool, addFiles, searchTools, getToolDetails, addComment, addDislike, addLike, addView, addShare, getCategories, deleteTool }
+const getTools = async (req: Request<{}, resBody>, res: Response<resBody>) => {
+    try {
+        if (req.user && 'id' in req.user) {
+            const userId = req.user.id;
+            const tools = await Tool.find();
+            return res.json({
+                message: "Data sent",
+                success: true,
+                data: tools
+            })
+        }
+    } catch (error) {
+        return res.json({
+            message: "Error fetching data",
+            success: false,
+        })
+    }
+}
+
+export { addTool, addFiles, searchTools, getToolDetails, addComment, addDislike, addLike, addView, addShare, getCategories, deleteTool, getTools }

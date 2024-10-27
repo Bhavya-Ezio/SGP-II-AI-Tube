@@ -13,8 +13,9 @@ export type User = {
     "About": Array<string>,
     "ProfilePic": string,
     "verified": boolean,
-    "views": number,  
+    "views": number,
     "noOfTools": number,
     "googleID": string,
-    "shares": number
+    "shares": number,
+    "library": Array<Types.ObjectId>,
 }

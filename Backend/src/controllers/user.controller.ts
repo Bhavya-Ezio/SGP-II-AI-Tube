@@ -10,6 +10,7 @@ import { Request, Response } from "express";
 import { loginReturn } from "../models/returns.js";
 import { StatusCodes } from "http-status-codes";
 import { Views } from "../schemas/analytics.schema.js";
+import { Tool } from "../schemas/tool.schema.js";
 
 const transport = nm.createTransport({
     service: "gmail",
@@ -227,13 +228,13 @@ const addImg = async (id: Types.ObjectId, file: Express.Multer.File): Promise<re
 
 const getHistory = async (id: Types.ObjectId): Promise<resBody> => {
     try {
-        const h = await Views.find({ userId: id });
-
-        if (h) {
+        const h = await Views.find({ userId: id }).populate("toolId").select("-__v -uploaderID -videos -files");
+        const sortedHistory = h.sort((a, b) => new Date(b.viewedAt).getTime() - new Date(a.viewedAt).getTime());
+        if (sortedHistory) {
             return {
                 message: "Data sent",
                 success: true,
-                data: h.sort()
+                data: sortedHistory
             }
         } else {
             return {
@@ -249,4 +250,94 @@ const getHistory = async (id: Types.ObjectId): Promise<resBody> => {
         }
     }
 }
-export { getProfile, loginUser, createUser, addShare, updateUser, addImg, addDetails, getHistory }
+
+const addToLibrary = async (userid: Types.ObjectId, tool_id: Types.ObjectId) => {
+    try {
+        console.log(userid, tool_id);
+        const userDoc = await user.findById(userid);
+        if (userDoc && !userDoc.library.includes(tool_id)) {
+            await user.updateOne({ _id: userid }, { $push: { library: tool_id } });
+            return {
+                message: "Added to Library",
+                success: true
+            }
+        } else {
+            return {
+                message: "Tool already in Library",
+                success: false
+            }
+        }
+    } catch (e: any) {
+        console.log(e.message)
+        return {
+            message: "Error adding to Library",
+            success: false
+        }
+    }
+}
+
+const removeFromLibrary = async (userid: Types.ObjectId, tool_id: Types.ObjectId) => {
+    try {
+        const userDoc = await user.findById(userid);
+        if (userDoc && userDoc.library.includes(tool_id)) {
+            await user.updateOne({ _id: userid }, { $pull: { library: tool_id } });
+            return {
+                message: "Removed from Library",
+                success: true
+            }
+        } else {
+            return {
+                message: "Tool not found in Library",
+                success: false
+            }
+        }
+    } catch (e: any) {
+        console.log(e.message);
+        return {
+            message: "Error removing from Library",
+            success: false
+        }
+    }
+}
+
+const getLibrary = async (userid: Types.ObjectId): Promise<resBody> => {
+    try {
+        const userDoc = await user.findById(userid).select("library").populate({
+            path: "library",
+            model: "tools",
+            select: "-__v -uploaderID -videos -files"
+        });
+        if (userDoc) {
+            return {
+                message: "Data sent",
+                success: true,
+                data: userDoc
+            };
+        } else {
+            return {
+                message: "User not found",
+                success: false
+            };
+        }
+    } catch (e: any) {
+        console.log(e.message);
+        return {
+            message: "Error retrieving library",
+            success: false
+        };
+    }
+}
+
+export {
+    createUser,
+    loginUser,
+    getProfile,
+    addShare,
+    updateUser,
+    addImg,
+    getHistory,
+    addToLibrary,
+    removeFromLibrary,
+    getLibrary,
+    addDetails
+};
