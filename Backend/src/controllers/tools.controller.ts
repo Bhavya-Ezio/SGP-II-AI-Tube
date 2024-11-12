@@ -112,7 +112,7 @@ const searchTools = async (req: Request<{ id: string }, resBody>, res: Response<
                 { name: regExp },
                 { description: regExp }
             ]
-        }, { _id: 1, name: 1, uploaderID: 1 }).populate("uploaderID", { username: 1 })
+        }).populate("uploaderID", { username: 1 })
         return res.json({
             message: "data sent",
             success: true,
@@ -129,8 +129,16 @@ const searchTools = async (req: Request<{ id: string }, resBody>, res: Response<
 const getToolDetails = async (req: Request<{ id: string }, resBody>, res: Response<resBody>) => {
     try {
         const toolId = req.params.id;
-        const tool = await Tool.findById(toolId).select("-_id -__v")
-            .populate("comments", { _id: 0, __v: 0 });
+        const tool = await Tool.findById(toolId)
+            .select("-_id -__v")
+            .populate({
+                path: 'comments',
+                select: '-_id -__v',
+                populate: {
+                    path: 'userId',
+                    select: 'username'
+                }
+            });
         return res.json({
             message: "data sent",
             success: true,
@@ -319,7 +327,7 @@ const getTools = async (req: Request<{}, resBody>, res: Response<resBody>) => {
     try {
         if (req.user && 'id' in req.user) {
             const userId = req.user.id;
-            const tools = await Tool.find();
+            const tools = await Tool.find().limit(30);
             return res.json({
                 message: "Data sent",
                 success: true,

@@ -1,5 +1,4 @@
 import { Types } from "mongoose";
-import { category } from "./categories";
 
 export type Comments = {
     "userId": Types.ObjectId,
