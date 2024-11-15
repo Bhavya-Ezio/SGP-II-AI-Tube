@@ -152,10 +152,19 @@ const getToolDetails = async (req: Request<{ id: string }, resBody>, res: Respon
                     select: 'username'
                 }
             });
+        let liked = null;
+        if (req.user && "id" in req.user) {
+            const userId = req.user.id;
+            const like = await LikeDislikes.findOne({ "userId": userId, "toolId": toolId })
+            liked = like?.like
+        }
         return res.json({
             message: "data sent",
             success: true,
-            data: tool!,
+            data: {
+                tool: tool!,
+                liked: liked
+            },
         })
     } catch (e: any) {
         console.log(e.message);
