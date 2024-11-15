@@ -103,28 +103,41 @@ const addFiles = async (req: Request<{ id: string }, resBody, Tools>, res: Respo
     }
 }
 
-const searchTools = async (req: Request<{ id: string }, resBody>, res: Response<resBody>) => {
+const searchTools = async (
+    req: Request<{ search: string }, {}, {}, { page?: string }>,
+    res: Response<resBody>
+) => {
     try {
-        const query = req.params.id;
-        const regExp = new RegExp(query, 'i');
+        const query = req.params.search;
+
+        // Pagination settings
+        const page = parseInt(req.query.page || '1');
+        const limit = 20;
+        const skip = (page - 1) * limit;
+
+        // Fetch tools with pagination
         const tools = await Tool.find({
-            $or: [
-                { name: regExp },
-                { description: regExp }
-            ]
-        }).populate("uploaderID", { username: 1 })
-        return res.json({
-            message: "data sent",
+            $text: { $search: query }
+        })
+            .populate("uploaderID", { username: 1 })
+            .sort({ score: { $meta: "textScore" } }) // Sort by relevance score
+            .skip(skip)
+            .limit(limit)
+            .select({ score: { $meta: "textScore" } }); // Include score in results
+
+        return res.status(StatusCodes.OK).json({
+            message: "Data sent",
             success: true,
             data: tools,
-        }).status(StatusCodes.OK);
+        });
     } catch (error: any) {
-        return res.json({
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             message: error.message,
             success: false,
-        }).status(StatusCodes.INTERNAL_SERVER_ERROR);
+        });
     }
-}
+};
+
 
 const getToolDetails = async (req: Request<{ id: string }, resBody>, res: Response<resBody>) => {
     try {
@@ -323,17 +336,23 @@ const deleteTool = async (req: Request<{ id: string }, resBody>, res: Response<r
     }
 }
 
-const getTools = async (req: Request<{}, resBody>, res: Response<resBody>) => {
+const getTools = async (req: Request<{}, resBody, {}, { page?: string }>, res: Response<resBody>) => {
     try {
-        if (req.user && 'id' in req.user) {
-            const userId = req.user.id;
-            const tools = await Tool.find().limit(30);
-            return res.json({
-                message: "Data sent",
-                success: true,
-                data: tools
-            })
-        }
+        // Pagination settings
+        const page = parseInt(req.query.page || '1');
+        const limit = 20;
+        const skip = (page - 1) * limit;
+        const tools = await Tool.find().limit(30).skip(skip).limit(limit);
+        tools.sort((a, b) => {
+            const scoreA = Number(a.views) + Number(a.likes) - Number(a.dislikes);
+            const scoreB = Number(b.views) + Number(b.likes) - Number(b.dislikes);
+            return scoreB - scoreA; // Sort in descending order
+        });
+        return res.json({
+            message: "Data sent",
+            success: true,
+            data: tools
+        })
     } catch (error) {
         return res.json({
             message: "Error fetching data",
